@@ -17,9 +17,9 @@ close all
 
 image = imread('images/im1s.jpg');
 
-%% STAFF LINE IDENTIFICATION 
+% PREPROCESSING 
 
-% Binary image
+% Convert to binary image
 bw = 1-im2bw(image, 0.8);
 
 % Find rotation using Hough transform
@@ -29,39 +29,50 @@ barAngle = theta(peak(2));
 B = imrotate(image, 90 + barAngle, 'loose');
 bw = 1-im2bw(B, 0.8);
 
-% Find locations using Horizontal projection
+
+% STAFF LINE IDENTIFICATION 
+
+
+close all
+
+staff_lines = staff_line_identification(bw);
+
+
+j = 1;
+for i=1:length(staff_lines(:,1))
+    bw(staff_lines(i,1)-1, :) = 0;
+    bw(staff_lines(i,1), :) = 0;
+    bw(staff_lines(i,1)+1, :) = 0;
+end
+
+se_line = strel('line', 4, 90);
+bw = imdilate(bw,se_line);
+
+figure 
+imshow(bw)
+
 figure
-plot(sum(bw,2), fliplr(1:size(bw,1)));
-[pks, locs] = findpeaks(sum(bw,2));
-
-% Remove all unrelevant peaks based on threshold
-% Can be improved by using cluster classification
-tresh = pks > max(pks)/3;
-locs = locs .* tresh;
-pks = pks .* tresh;
-
-pks_tresh = pks(pks~=0);
-locs_tresh = locs(locs~=0);
-cluster_i = kmeans(locs_tresh, 3);
 
 imshow(bw)
 hold on
-
 % Print located staff lines
-for i = 1:length(locs_tresh)
+for i = 1:length(staff_lines)
      
-    p1 = [locs_tresh(i),0];
-    p2 = [locs_tresh(i), pks_tresh(i)];
+    p1 = [staff_lines(i,1),0];
+    p2 = [staff_lines(i,1), 1000];
     
-    if(cluster_i(i) == 1)
+    if(staff_lines(i,2) == 1)
         plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','r','LineWidth',2)
-    elseif(cluster_i(i) == 2)
+    elseif(staff_lines(i,2) == 2)
         plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','g','LineWidth',2)
-    elseif(cluster_i(i) == 3)
+    elseif(staff_lines(i,2) == 3)
         plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','b','LineWidth',2)
+    elseif(staff_lines(i,2) == 4)
+        plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','c','LineWidth',2)
     end
         
     hold on    
 end
 
+%%
 
