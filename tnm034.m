@@ -37,7 +37,7 @@ close all
 
 staff_lines = staff_line_identification(bw);
 
-
+% Remove staff lines
 j = 1;
 for i=1:length(staff_lines(:,1))
     bw(staff_lines(i,1)-1, :) = 0;
@@ -45,8 +45,27 @@ for i=1:length(staff_lines(:,1))
     bw(staff_lines(i,1)+1, :) = 0;
 end
 
+% Expand objects to clean up holes etc
 se_line = strel('line', 4, 90);
 bw = imdilate(bw,se_line);
+
+% Divide into subimages for each row block
+split_pos(1) = bw(1,1);
+for i=5:5:length(staff_lines(:,1))-1
+    split_pos(end+1) = staff_lines(i,1) + ((staff_lines(i+1,1) - staff_lines(i,1)) / 2);
+end
+split_pos(end+1) = length(bw(:,1));
+
+notes_row = [];
+for i=1:length(split_pos)-1
+    i
+    notes_row{i} = bw(split_pos(i):split_pos(i+1),:);
+    
+    figure 
+    imshow(notes_row{i})
+end 
+
+%%
 
 figure 
 imshow(bw)
