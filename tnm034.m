@@ -37,9 +37,9 @@ bw = bw_original;
 % STAFF LINE IDENTIFICATION 
 staff_lines = staff_line_identification(bw);
 
-%% Remove staff lines
+% Remove staff lines
 
-bw_no_sl = bw
+bw_no_sl = bw;
 
 for i=1:length(staff_lines(:,1))
     bw_no_sl(staff_lines(i,1)-1, :) = 0;
@@ -47,17 +47,7 @@ for i=1:length(staff_lines(:,1))
     bw_no_sl(staff_lines(i,1)+1, :) = 0;
 end
 
-figure;
-imshow(bw_no_sl)
-
-% Expand objects to clean up holes etc
-%se_line = strel('line', 4, 90);
-%bw = imdilate(bw,se_line);
-%locations = [locs_y{3}(:), locs_x{3}(:)]
-%BW2 = imfill(logical(notes_row{3}), locations, 8)
-%imshow(BW2)
-
-%% Divide into subimages for each row block
+% Identify positions to split into subimages for each row block
 
 split_pos(1) = 70;
 for i=5:5:length(staff_lines(:,1))-1
@@ -65,38 +55,44 @@ for i=5:5:length(staff_lines(:,1))-1
 end
 split_pos(end+1) = length(bw(:,1))-20;
 
+% Split bw and bw without staff lines
 
-%% Detect note heads
+subimg = [];
+subimg_no_sl = [];
+for i=1:length(split_pos)-1
+    subimg{i} = bw(split_pos(i):split_pos(i+1),:);
+    subimg_no_sl{i} = bw_no_sl(split_pos(i):split_pos(i+1),:);
+end
+
+
+% Detect note heads
 
 se_disk = strel('disk', 4);
 
-notes_row = [];
-subimg = [];
+subimg_temp = [];
 locs_x = [];
 locs_y = [];
 for i=1:length(split_pos)-1
-    notes_row{i} = bw(split_pos(i):split_pos(i+1),:);
+    subimg_temp{i} = imerode(subimg{i},se_disk);
+    overlay1 = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
+    %figure;
+    %imshow(overlay1);
     
-    subimg{i} = imerode(notes_row{i},se_disk);
-    overlay1 = imoverlay(notes_row{i}, subimg{i}, [.3 1 .3]);
-    figure;
-    imshow(overlay1);
-    
-    [pks, locs_x{i}] = findpeaks(sum(subimg{i},1));
+    [pks, locs_x{i}] = findpeaks(sum(subimg_temp{i},1));
     
     locs_y{i} = [];
     for j = 1:length(locs_x{i})
-        temp = subimg{i}(:, locs_x{i}(j)-2:locs_x{i}(j)+2);
+        temp = subimg_temp{i}(:, locs_x{i}(j)-2:locs_x{i}(j)+2);
         [pks, lo] = findpeaks(sum(temp,2));
         indexOfMaxValue = find(pks == max(pks));
         locs_y{i}(j) = lo(indexOfMaxValue(1));
     end
     
     %figure 
-    %imshow(notes_row{i})
+    %imshow(subimg{i})
 end 
 
-%% Map staff lines to block rows
+% Map staff lines to block rows
 
 subimg_staff_lines = [];
 for i=1:length(split_pos)-1
@@ -114,11 +110,34 @@ for i=1:9
     end
 end
 
-figure
-imshow(notes_row{3})
+%figure
+%imshow(subimg{3})
+
+
+%% Expand from note heads to clean up holes etc
+se_line = strel('line', 4, 90);
+bw2 = imdilate(subimg_no_sl{3},se_line);
+
+imshow(bw2)
+
+%{
+locations = [locs_x{3}(:),locs_y{3}(:)];
+
+bw2 = subimg_no_sl{3};
+counter = 0;
+for i=1:length(locations)
+    if subimg_no_sl{3}(locations(i,2), locations(i,1)) == 1
+        counter = counter +1
+        bw2 = imfill(logical(subimg_no_sl{3}), [locations(i,2), locations(i,1)], 18);
+    end
+end
+counter
+imshow(bw2);
+%}
 
 %% Highlight note heads
-
+figure
+imshow(subimg_no_sl{3})
 hold on;
 
 for i = 1:length(locs_x{3})
@@ -148,16 +167,6 @@ for i = 1:length(locs_y{3})
 end
 
 result
-    
-%% Highlight note heads / fill after removal of stafflines
-
-bw2 = imfill(notes_row{1},'holes');
-bw3 = imopen(bw2, ones(2,2));
-bw4 = bwareaopen(bw2, 5);
-bw4_perim = bwperim(bw4);
-imshow(bw4_perim)
-overlay1 = imoverlay(notes_row{1}, bw4_perim, [.3 1 .3]);
-%imshow(overlay1)
 
 %%
 
