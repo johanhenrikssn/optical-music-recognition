@@ -5,8 +5,8 @@ function [ staff_lines ] = staff_line_identification( bw_image )
 
 
     % Find locations using Horizontal projection
-    figure
-    plot(sum(bw_image,2), fliplr(1:size(bw_image,1)));
+    %figure
+    %plot(sum(bw_image,2), fliplr(1:size(bw_image,1)));
     [pks, locs] = findpeaks(sum(bw_image,2));
 
     % Remove all unrelevant peaks based on threshold
