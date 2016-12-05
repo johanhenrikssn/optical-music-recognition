@@ -74,7 +74,7 @@ locs_x = [];
 locs_y = [];
 for i=1:length(split_pos)-1
     subimg_temp{i} = imerode(subimg{i},se_disk);
-    overlay1 = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
+    %overlay1 = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
     %figure;
     %imshow(overlay1);
     
@@ -134,6 +134,23 @@ end
 counter
 imshow(bw2);
 %}
+
+%% Draw bounding boxes around note heads
+imshow(bw2);
+
+L = bwlabel(bw2);
+objects = regionprops(L, 'Area', 'BoundingBox');
+for i_img=1:length(split_pos)-1
+    for i = 1:length(locs_x{i_img})
+        for k = 1:length(objects)
+            bb = objects(k).BoundingBox;
+            if locs_x{i_img}(i) > bb(1) && locs_x{i_img}(i) < bb(1)+bb(3) && locs_y{i_img}(i) > bb(2) && locs_y{i_img}(i) < bb(2)+bb(4)
+                rectangle('Position',[bb(1) bb(2) bb(3) bb(4)],'EdgeColor','green');
+            end
+        end
+    end
+end
+
 
 %% Highlight note heads
 figure
