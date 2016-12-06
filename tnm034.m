@@ -164,38 +164,41 @@ for i_img=1:length(split_pos)-1
 end
 
 
-for i = 1:length(locs_bb{3})
-    if ~locs_eighth_note{3}(i)
-        % Horizontal projection to find eighth flag
-        x_min = floor(locs_bb{3}(i).BoundingBox(1));
-        y_min = floor(locs_bb{3}(i).BoundingBox(2));
-        width = floor(locs_bb{3}(i).BoundingBox(3));
-        height = floor(locs_bb{3}(i).BoundingBox(4));
-        
-        tempimg = subimg_clean{3}(y_min:(y_min+height), x_min:(x_min+width));
-         
-        [pks, locs] = findpeaks(sum(tempimg, 2));
-        if length(pks) > 2
-            locs_eighth_note{3}(i) = true;
+for i_img=1:length(split_pos)-1
+    for i = 1:length(locs_bb{i_img})
+        if ~locs_eighth_note{i_img}(i)
+            % Horizontal projection to find eighth flag
+            x_min = floor(locs_bb{i_img}(i).BoundingBox(1));
+            y_min = floor(locs_bb{i_img}(i).BoundingBox(2));
+            width = floor(locs_bb{i_img}(i).BoundingBox(3));
+            height = floor(locs_bb{i_img}(i).BoundingBox(4));
+
+            tempimg = subimg_clean{i_img}(y_min:(y_min+height), x_min:(x_min+width));
+
+            [pks, locs] = findpeaks(sum(tempimg, 2));
+            if length(pks) > 2
+                locs_eighth_note{i_img}(i) = true;
+            end
         end
     end
 end
 
-
 % Determine tones
 
-notes = ['f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e'];
+notes = {'F3', 'E3', 'D3', 'C3', 'B2', 'A2', 'G2', 'F2', 'E2'};
 result = '';
-for i = 1:length(locs_y{3})
-    [~, I] = min(abs(subimg_notes-locs_y{3}(i)));
-    c = subimg_notes(I);
-    
-    tone = notes(I);
-    if locs_eighth_note{3}(i)
-        tone = upper(tone);
+for i_img=1:length(split_pos)-1
+    for i = 1:length(locs_y{i_img})
+        [~, I] = min(abs(subimg_notes-locs_y{i_img}(i)));
+
+        tone = notes{I};
+        if locs_eighth_note{i_img}(i)
+            tone = lower(tone);
+        end
+
+        result = strcat(result, tone);
     end
-    
-    result = strcat(result, tone);
+    result = strcat(result, 'n');
 end
 
 result
