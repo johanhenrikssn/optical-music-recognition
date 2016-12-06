@@ -15,7 +15,7 @@
 clear all
 close all
 
-image = imread('images/le_1.jpg');
+image = imread('images/im5s.jpg');
 
 % PREPROCESSING 
 
@@ -63,9 +63,6 @@ subimg_no_sl = [];
 for i=1:length(split_pos)-1
     subimg{i} = bw(split_pos(i):split_pos(i+1),:);
     subimg_no_sl{i} = bw_no_sl(split_pos(i):split_pos(i+1),:);
-    
-    figure;
-    imshow(subimg{i});
 end
 
 
@@ -189,33 +186,34 @@ end
 
 notes = {'E4','D4','C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2','D2','C2','B1','A1','G1'};
 result = '';
-for i_img=1:1
-    ref_staff_line = subimg_staff_lines{i_img}(5);
-    diff = mean(diff(subimg_staff_lines{i_img}))/2
+
+ref_staff_line = subimg_staff_lines{1}(5);
+diff = mean(diff(subimg_staff_lines{1}))/2;
+
+for i_img=1:length(split_pos)-1
+
 
     subresult = '';
-    for i = 1:2
+    for i = 1:length(locs_y{i_img})
         distance = ref_staff_line-locs_y{i_img}(i)
         
         
         ref_note = 15;
         tone_distance = round(distance/diff)
         
-        tone = notes(ref_note-tone_distance)
+        tone = notes{ref_note-tone_distance}
         
         
         
-        %if locs_eighth_note{i_img}(i)
-         %   tone = lower(tone);
-        %end
+        if locs_eighth_note{i_img}(i)
+            tone = lower(tone);
+        end
         %subresult = strcat(subresult, tone);
 
-        %result = strcat(result, tone);
+        result = strcat(result, tone);
     end
     
-    %i_img
-    %subresult
-    %result = strcat(result, 'n');
+    result = strcat(result, 'n');
 end
 
-%result
+result
