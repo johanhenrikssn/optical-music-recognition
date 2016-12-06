@@ -114,7 +114,7 @@ end
 %imshow(subimg{3})
 
 
-%% Expand from note heads to clean up holes etc
+% Expand from note heads to clean up holes etc
 se_line = strel('line', 4, 90);
 subimg_clean = [];
 for i_img=1:length(split_pos)-1
@@ -125,7 +125,7 @@ for i_img=1:length(split_pos)-1
 
 end
 
-%% Draw bounding boxes around note heads
+% Draw bounding boxes around note heads
 
 for i_img=1:length(split_pos)-1
     % Get all coherent regions
@@ -148,8 +148,21 @@ for i_img=1:length(split_pos)-1
     end
 end
 
-
-% Check if multiple noteheads share bb
+%%
+% Check if multiple noteheads share bounding box and classify as eighth
+% notes
+locs_eighth_note = [];
+for i_img=1:length(split_pos)-1
+    locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
+    for i = 1:length(locs_bb{i_img})
+        for j = 1:length(locs_bb{i_img})
+            if (i ~= j && locs_bb{i_img}(i).BoundingBox(1) == locs_bb{i_img}(j).BoundingBox(1))
+                locs_eighth_note{i_img}(i) = true;
+                break
+            end
+        end
+    end
+end
 
 %% Determine tones
 
