@@ -15,7 +15,7 @@
 clear all
 close all
 
-image = imread('images/im1s.jpg');
+image = imread('images/le_1.jpg');
 
 % PREPROCESSING 
 
@@ -26,11 +26,14 @@ bw_original = 1-im2bw(image, 0.8);
 [H, theta, rho] = hough(bw_original, 'theta', -89.9:0.1:89.9);
 peak = houghpeaks(H);
 barAngle = theta(peak(2));
-B = imrotate(image, 90 + barAngle, 'loose');
+rotationAngle = 90 + barAngle;
+B = imrotate(image, rotationAngle, 'loose');
 bw_original = 1-im2bw(B, 0.8);
 
+crop = round(tand(rotationAngle) * length(bw_original(1,:)));
+
 % Remove rotation distortion
-bw_original = bw_original(20:end-20,20:end-20);
+bw_original = bw_original(crop:end-crop,crop:end-crop);
 
 bw = bw_original;
 
@@ -48,11 +51,11 @@ for i=1:length(staff_lines(:,1))
 end
 
 % Identify positions to split into subimages for each row block
-split_pos(1) = 70;
+split_pos(1) = 1;
 for i=5:5:length(staff_lines(:,1))-1
     split_pos(end+1) = ceil(staff_lines(i,1) + ((staff_lines(i+1,1) - staff_lines(i,1)) / 2));
 end
-split_pos(end+1) = length(bw(:,1))-20;
+split_pos(end+1) = length(bw(:,1));
 
 % Split bw and bw without staff lines
 subimg = [];
@@ -60,6 +63,9 @@ subimg_no_sl = [];
 for i=1:length(split_pos)-1
     subimg{i} = bw(split_pos(i):split_pos(i+1),:);
     subimg_no_sl{i} = bw_no_sl(split_pos(i):split_pos(i+1),:);
+    
+    figure;
+    imshow(subimg{i});
 end
 
 
@@ -73,7 +79,7 @@ for i=1:length(split_pos)-1
     % Filter out round objects i.e. note heads
     subimg_temp{i} = imerode(subimg{i},se_disk);
     % Remove noise
-    subimg_temp{i} = bwareaopen(subimg_temp{i}, 5)
+    subimg_temp{i} = bwareaopen(subimg_temp{i}, 5);
     % Merge close objects
     subimg_temp{i} = imdilate(subimg_temp{i},se_disk);
     
@@ -81,7 +87,7 @@ for i=1:length(split_pos)-1
     figure;
     imshow(overlay);
     
-    
+
     [pks, locs_x{i}] = findpeaks(sum(subimg_temp{i},1));
     
     locs_y{i} = [];
@@ -91,7 +97,7 @@ for i=1:length(split_pos)-1
         indexOfMaxValue = find(pks == max(pks));
         locs_y{i}(j) = lo(indexOfMaxValue(1));
     end
-    
+
     %figure 
     %imshow(subimg{i})
 end 
@@ -184,15 +190,18 @@ end
 notes = {'E4','D4','C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2','D2','C2','B1','A1','G1'};
 result = '';
 for i_img=1:1
-    reference_staff_line = subimg_staff_lines{i_img}(5);
+    ref_staff_line = subimg_staff_lines{i_img}(5);
+    diff = mean(diff(subimg_staff_lines{i_img}))/2
+
     subresult = '';
     for i = 1:2
-        distance = reference_staff_line-locs_y{i_img}(i)
+        distance = ref_staff_line-locs_y{i_img}(i)
         
         
-        reference_note = 15;
-        diff = mean(diff(subimg_staff_lines{i_img}))
+        ref_note = 15;
         tone_distance = round(distance/diff)
+        
+        tone = notes(ref_note-tone_distance)
         
         
         
@@ -210,5 +219,3 @@ for i_img=1:1
 end
 
 %result
-
-
