@@ -116,62 +116,40 @@ end
 
 %% Expand from note heads to clean up holes etc
 se_line = strel('line', 4, 90);
-bw2 = imdilate(subimg_no_sl{3},se_line);
+subimg_clean = [];
+for i_img=1:length(split_pos)-1
+    subimg_clean{i_img} = imdilate(subimg_no_sl{i_img},se_line);
+    
+    %figure
+    %imshow(subimg_clean{i_img})
 
-imshow(bw2)
-
-%{
-locations = [locs_x{3}(:),locs_y{3}(:)];
-
-bw2 = subimg_no_sl{3};
-counter = 0;
-for i=1:length(locations)
-    if subimg_no_sl{3}(locations(i,2), locations(i,1)) == 1
-        counter = counter +1
-        bw2 = imfill(logical(subimg_no_sl{3}), [locations(i,2), locations(i,1)], 18);
-    end
 end
-counter
-imshow(bw2);
-%}
 
 %% Draw bounding boxes around note heads
-imshow(bw2);
 
-L = bwlabel(bw2);
-objects = regionprops(L, 'Area', 'BoundingBox');
 for i_img=1:length(split_pos)-1
+    % Get all coherent regions
+    L = bwlabel(subimg_clean{i_img});
+    objects = regionprops(L, 'BoundingBox');
+    
+    figure
+    imshow(subimg_clean{i_img})
+
     for i = 1:length(locs_x{i_img})
         for k = 1:length(objects)
             bb = objects(k).BoundingBox;
+            % Find right bounding box for each note head
             if locs_x{i_img}(i) > bb(1) && locs_x{i_img}(i) < bb(1)+bb(3) && locs_y{i_img}(i) > bb(2) && locs_y{i_img}(i) < bb(2)+bb(4)
-                rectangle('Position',[bb(1) bb(2) bb(3) bb(4)],'EdgeColor','green');
+                % Draw and store bounding box
+                rectangle('Position',bb,'EdgeColor','green');
+                locs_bb{i_img}(i) = objects(k);
             end
         end
     end
 end
 
 
-%% Highlight note heads
-figure
-imshow(subimg_no_sl{3})
-hold on;
-
-for i = 1:length(locs_x{3})
-    
-    p1 = [0, locs_x{3}(i)];
-    p2 = [1000, locs_x{3}(i)];
-
-   % p11 = [locs_y{3}(i), 0];
-   % p22 = [locs_y{3}(i), 1000];
-    
-    plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','r','LineWidth',2)
-   % plot([p11(2),p22(2)],[p11(1),p22(1)],'Color','g','LineWidth',2)
-
-    
-        
-    hold on    
-end
+% Check if multiple noteheads share bb
 
 %% Determine tones
 
@@ -185,33 +163,4 @@ end
 
 result
 
-%%
-
-figure 
-imshow(bw)
-
-figure
-
-imshow(bw)
-hold on
-% Print located staff lines
-for i = 1:length(staff_lines)
-     
-    p1 = [staff_lines(i,1),0];
-    p2 = [staff_lines(i,1), 1000];
-    
-    if(staff_lines(i,2) == 1)
-        plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','r','LineWidth',2)
-    elseif(staff_lines(i,2) == 2)
-        plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','g','LineWidth',2)
-    elseif(staff_lines(i,2) == 3)
-        plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','b','LineWidth',2)
-    elseif(staff_lines(i,2) == 4)
-        plot([p1(2),p2(2)],[p1(1),p2(1)],'Color','c','LineWidth',2)
-    end
-        
-    hold on    
-end
-
-%%
 
