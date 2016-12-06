@@ -70,10 +70,17 @@ subimg_temp = [];
 locs_x = [];
 locs_y = [];
 for i=1:length(split_pos)-1
+    % Filter out round objects i.e. note heads
     subimg_temp{i} = imerode(subimg{i},se_disk);
-    %overlay1 = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
-    %figure;
-    %imshow(overlay1);
+    % Remove noise
+    subimg_temp{i} = bwareaopen(subimg_temp{i}, 5)
+    % Merge close objects
+    subimg_temp{i} = imdilate(subimg_temp{i},se_disk);
+    
+    overlay = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
+    figure;
+    imshow(overlay);
+    
     
     [pks, locs_x{i}] = findpeaks(sum(subimg_temp{i},1));
     
