@@ -148,7 +148,6 @@ for i_img=1:length(split_pos)-1
     end
 end
 
-%%
 % Check if multiple noteheads share bounding box and classify as eighth
 % notes
 locs_eighth_note = [];
@@ -164,14 +163,39 @@ for i_img=1:length(split_pos)-1
     end
 end
 
-%% Determine tones
+
+for i = 1:length(locs_bb{3})
+    if ~locs_eighth_note{3}(i)
+        % Horizontal projection to find eighth flag
+        x_min = floor(locs_bb{3}(i).BoundingBox(1));
+        y_min = floor(locs_bb{3}(i).BoundingBox(2));
+        width = floor(locs_bb{3}(i).BoundingBox(3));
+        height = floor(locs_bb{3}(i).BoundingBox(4));
+        
+        tempimg = subimg_clean{3}(y_min:(y_min+height), x_min:(x_min+width));
+         
+        [pks, locs] = findpeaks(sum(tempimg, 2));
+        if length(pks) > 2
+            locs_eighth_note{3}(i) = true;
+        end
+    end
+end
+
+
+% Determine tones
 
 notes = ['f', 'e', 'd', 'c', 'b', 'a', 'g', 'f', 'e'];
 result = '';
 for i = 1:length(locs_y{3})
     [~, I] = min(abs(subimg_notes-locs_y{3}(i)));
     c = subimg_notes(I);
-    result = strcat(result, notes(I));
+    
+    tone = notes(I);
+    if locs_eighth_note{3}(i)
+        tone = upper(tone);
+    end
+    
+    result = strcat(result, tone);
 end
 
 result
