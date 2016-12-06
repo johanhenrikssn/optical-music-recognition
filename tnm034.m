@@ -48,7 +48,6 @@ for i=1:length(staff_lines(:,1))
 end
 
 % Identify positions to split into subimages for each row block
-
 split_pos(1) = 70;
 for i=5:5:length(staff_lines(:,1))-1
     split_pos(end+1) = ceil(staff_lines(i,1) + ((staff_lines(i+1,1) - staff_lines(i,1)) / 2));
@@ -56,7 +55,6 @@ end
 split_pos(end+1) = length(bw(:,1))-20;
 
 % Split bw and bw without staff lines
-
 subimg = [];
 subimg_no_sl = [];
 for i=1:length(split_pos)-1
@@ -66,7 +64,6 @@ end
 
 
 % Detect note heads
-
 se_disk = strel('disk', 4);
 
 subimg_temp = [];
@@ -92,8 +89,8 @@ for i=1:length(split_pos)-1
     %imshow(subimg{i})
 end 
 
-% Map staff lines to block rows
 
+% Map staff lines to block rows
 subimg_staff_lines = [];
 for i=1:length(split_pos)-1
     for j=1:5
@@ -101,14 +98,6 @@ for i=1:length(split_pos)-1
     end
 end
 
-subimg_notes = [];
-for i=1:9
-    if mod(i,2) == 0
-        subimg_notes(i) = subimg_staff_lines{3}(i/2)+5;
-    else
-        subimg_notes(i) = subimg_staff_lines{3}(i-floor(i/2));
-    end
-end
 
 %figure
 %imshow(subimg{3})
@@ -132,8 +121,8 @@ for i_img=1:length(split_pos)-1
     L = bwlabel(subimg_clean{i_img});
     objects = regionprops(L, 'BoundingBox');
     
-    figure
-    imshow(subimg_clean{i_img})
+    %figure
+    %imshow(subimg_clean{i_img})
 
     for i = 1:length(locs_x{i_img})
         for k = 1:length(objects)
@@ -141,7 +130,7 @@ for i_img=1:length(split_pos)-1
             % Find right bounding box for each note head
             if locs_x{i_img}(i) > bb(1) && locs_x{i_img}(i) < bb(1)+bb(3) && locs_y{i_img}(i) > bb(2) && locs_y{i_img}(i) < bb(2)+bb(4)
                 % Draw and store bounding box
-                rectangle('Position',bb,'EdgeColor','green');
+                %rectangle('Position',bb,'EdgeColor','green');
                 locs_bb{i_img}(i) = objects(k);
             end
         end
@@ -185,22 +174,34 @@ end
 
 % Determine tones
 
-notes = {'F3', 'E3', 'D3', 'C3', 'B2', 'A2', 'G2', 'F2', 'E2'};
+notes = {'E4','D4','C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2','D2','C2','B1','A1','G1'};
 result = '';
-for i_img=1:length(split_pos)-1
-    for i = 1:length(locs_y{i_img})
-        [~, I] = min(abs(subimg_notes-locs_y{i_img}(i)));
+for i_img=1:1
+    reference_staff_line = subimg_staff_lines{i_img}(5);
+    subresult = '';
+    for i = 1:2
+        distance = reference_staff_line-locs_y{i_img}(i)
+        
+        
+        reference_note = 15;
+        diff = mean(diff(subimg_staff_lines{i_img}))
+        tone_distance = round(distance/diff)
+        
+        
+        
+        %if locs_eighth_note{i_img}(i)
+         %   tone = lower(tone);
+        %end
+        %subresult = strcat(subresult, tone);
 
-        tone = notes{I};
-        if locs_eighth_note{i_img}(i)
-            tone = lower(tone);
-        end
-
-        result = strcat(result, tone);
+        %result = strcat(result, tone);
     end
-    result = strcat(result, 'n');
+    
+    %i_img
+    %subresult
+    %result = strcat(result, 'n');
 end
 
-result
+%result
 
 
