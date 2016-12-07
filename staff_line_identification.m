@@ -2,15 +2,21 @@ function [ staff_lines ] = staff_line_identification( bw_image )
 % STAFF LINE IDENTIFICATION 
 %   Inputs, binary image
 %   Outputs, positions and cluster of the staff lines
-
-
-    % Find locations using Horizontal projection
+    
+    % Plot the horizontal projection
     %figure
     %plot(sum(bw_image,2), fliplr(1:size(bw_image,1)));
+    
+    % Erosion of horizontal lines 
+    se_line = strel('line', length(bw_image)*0.01, 0);
+    bw_image = imerode(bw_image, se_line);
+    
+    % Find locations using Horizontal projection
     [pks, locs] = findpeaks(sum(bw_image,2));
 
     % Remove all unrelevant peaks based on threshold
     % Can be improved by using cluster classification
+    % median(diff(locs)) can be used
     tresh = pks > max(pks)/3;
     locs = locs .* tresh;
     pks = pks .* tresh;
@@ -22,10 +28,11 @@ function [ staff_lines ] = staff_line_identification( bw_image )
     % Classification of stafflines clusters
     if mod(length(locs_tresh), 5) == 0
         for i = 1:length(locs_tresh)
-            staff_lines(i,1) = locs_tresh(i);
-            staff_lines(i,2) = ceil(i/5);
+            staff_lines(i) = locs_tresh(i);
         end
     end
 
 end
+
+
 
