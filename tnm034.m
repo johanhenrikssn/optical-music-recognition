@@ -100,7 +100,7 @@ end
 imshow(subimg{1})
 hold on
 for i= 1:length(locs_y{1})
-    p1 = [locs_x{1}(i)+2, locs_y{1}(i)+3];
+    p1 = [locs_x{1}(i)+2, locs_y{1}(i)];
     plot(p1(1), p1(2), '*')
     hold on
 end
@@ -153,13 +153,20 @@ for i_img=1:length(split_pos)-1
         end
     end
 end
+%
+% Check if multiple noteheads share bounding box and classify as eighth notes
+locs_group_size = [];
+for i_img=1:length(split_pos)-1
+    bb_mat = cell2mat(locs_bb{i_img});
+    for i = 1:length(locs_bb{i_img})
+        locs_group_size{i_img}(i) = length(find(bb_mat(1:4:end) == locs_bb{i_img}{i}(1)));
+    end
+end
 
-% Check if multiple noteheads share bounding box and classify as eighth
-% notes
 locs_eighth_note = [];
 locs_fourth_note = [];
 pks_temp = [];
-for i_img=1:length(split_pos)-1
+for i_img=1%:length(split_pos)-1
     locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
     locs_fourth_note{i_img} = zeros(1,length(locs_x{i_img}));
 
@@ -169,11 +176,14 @@ for i_img=1:length(split_pos)-1
         y_min = floor(locs_bb{i_img}{i}(2));
         width = floor(locs_bb{i_img}{i}(3));
         height = floor(locs_bb{i_img}{i}(4));
-
-        tempimg = subimg_clean{i_img}(y_min:(y_min+height), x_min:(x_min+width));
-            
-        %figure
-        %imshow(tempimg)
+        
+        if locs_y{i_img}(i) > y_min+height/2
+            tempimg = subimg_clean{i_img}(y_min:(locs_y{i_img}(i)-7), locs_x{i_img}(i)-10:locs_x{i_img}(i)+10);
+        else
+            tempimg = subimg_clean{i_img}((locs_y{i_img}(i)+7):(y_min+height), locs_x{i_img}(i)-7:locs_x{i_img}(i)+7); 
+        end
+        figure
+        imshow(tempimg)
 
         [pks, locs] = findpeaks(sum(tempimg, 2));
         pks_temp{i_img}{i} = pks;
@@ -188,7 +198,7 @@ for i_img=1:length(split_pos)-1
     end
 end
 
-
+%%
 % Determine tones
 
 notes = {'E4','D4','C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2','D2','C2','B1','A1','G1'};
