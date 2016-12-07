@@ -15,7 +15,7 @@
 clear all
 close all
 
-image = imread('images/im1s.jpg');
+image = imread('images/im5s.jpg');
 
 % PREPROCESSING 
 
@@ -154,6 +154,7 @@ for i_img=1:length(split_pos)-1
     end
 end
 
+% Clean up everything except the notes
 for i_img=1:length(split_pos)-1
 
    for k = 1:length(objects{i_img})
@@ -185,34 +186,53 @@ pks_temp = [];
 for i_img=1:length(split_pos)-1
     locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
     locs_fourth_note{i_img} = zeros(1,length(locs_x{i_img}));
+    
+    bb_mat = cell2mat(locs_bb{i_img});
 
-    for i = 1:length(locs_x{i_img})
+    for i =1:length(locs_x{i_img})
         % Horizontal projection to classify note type
         x_min = floor(locs_bb{i_img}{i}(1));
         y_min = floor(locs_bb{i_img}{i}(2));
         width = floor(locs_bb{i_img}{i}(3));
         height = floor(locs_bb{i_img}{i}(4));
-        
-        if locs_y{i_img}(i) > y_min+height/2
+
+        i_group = find(bb_mat(1:4:end) == locs_bb{i_img}{i}(1));
+        mean_y = mean(locs_y{i_img}(i_group));
+
+        if mean_y > y_min+height/2
             tempimg = subimg_clean{i_img}(y_min:(locs_y{i_img}(i)-7), locs_x{i_img}(i)-10:locs_x{i_img}(i)+10);
         else
-            tempimg = subimg_clean{i_img}((locs_y{i_img}(i)+7):(y_min+height), locs_x{i_img}(i)-7:locs_x{i_img}(i)+7); 
+            tempimg = subimg_clean{i_img}((locs_y{i_img}(i)+7):(y_min+height), locs_x{i_img}(i)-10:locs_x{i_img}(i)+10); 
         end
-        %figure
-        %imshow(tempimg)
-
-        [pks, locs] = findpeaks(sum(tempimg, 2));
-        pks_temp{i_img}{i} = pks;
-        if length(pks) > 5
-            locs_eighth_note{i_img}(i) = false;
-            locs_fourth_note{i_img}(i) = false;
-        elseif length(pks) > 2
-            locs_eighth_note{i_img}(i) = true;
+        
+        if (locs_group_size{i_img}(i) > 2)
+            beam_size = max(sum(tempimg(:,1)), sum(tempimg(:,end)))/length(tempimg(:,1));
+            
+            if beam_size > 0.32
+                locs_eighth_note{i_img}(i) = false;
+                locs_fourth_note{i_img}(i) = false;
+            else
+                locs_eighth_note{i_img}(i) = true;
+            end
+        
         else
-            locs_fourth_note{i_img}(i) = true;
+            i
+            flag_size = max(sum(tempimg(:,1)), sum(tempimg(:,end-6)))/length(tempimg(:,1))
+            %figure
+            %imshow(tempimg(:,:))
+            
+            if flag_size < 0.01
+                locs_fourth_note{i_img}(i) = true;
+            elseif flag_size < 0.7
+                locs_eighth_note{i_img}(i) = true;
+            else
+                locs_fourth_note{i_img}(i) = false;
+                locs_eighth_note{i_img}(i) = false;
+            end
         end
     end
 end
+
 
 
 % Determine tones
