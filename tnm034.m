@@ -15,7 +15,7 @@
 clear all
 close all
 
-image = imread('images/im5s.jpg');
+image = imread('images/im1s.jpg');
 
 % PREPROCESSING 
 
@@ -91,10 +91,10 @@ end
 
 
 
-imshow(subimg{1})
+imshow(subimg{2})
 hold on
-for i= 1:length(locs_y{1})
-    p1 = [locs_x{1}(i), locs_y{1}(i)];
+for i= 1:length(locs_y{2})
+    p1 = [locs_x{2}(i), locs_y{2}(i)];
     plot(p1(1), p1(2), '*')
     hold on
 end
@@ -119,10 +119,11 @@ subimg_clean = [];
 for i_img=1:length(split_pos)-1
     subimg_clean{i_img} = imdilate(subimg_no_sl{i_img},se_line);
     
-    %figure
-    %imshow(subimg_clean{i_img})
+    figure
+    imshow(subimg_no_sl{i_img})
 
 end
+
 
 %figure
 %imshow(subimg_clean{1})
@@ -179,13 +180,13 @@ end
 locs_eighth_note = [];
 locs_fourth_note = [];
 pks_temp = [];
-for i_img=1:length(split_pos)-1
+for i_img=2%1:length(split_pos)-1
     locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
     locs_fourth_note{i_img} = zeros(1,length(locs_x{i_img}));
     
     bb_mat = cell2mat(locs_bb{i_img});
 
-    for i =1:length(locs_x{i_img})
+    for i = [10, 11,12]%1:length(locs_x{i_img})
         % Horizontal projection to classify note type
         x_min = floor(locs_bb{i_img}{i}(1));
         y_min = floor(locs_bb{i_img}{i}(2));
@@ -196,36 +197,45 @@ for i_img=1:length(split_pos)-1
         mean_y = mean(locs_y{i_img}(i_group));
 
         if mean_y > y_min+height/2
-            tempimg = subimg_clean{i_img}(y_min:(locs_y{i_img}(i)-7), locs_x{i_img}(i)-10:locs_x{i_img}(i)+10);
+            tempimg = subimg_clean{i_img}(y_min:(round(locs_y{i_img}(i))-7), round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+            flag_size = mean(tempimg(:,end));
+
         else
-            tempimg = subimg_clean{i_img}((locs_y{i_img}(i)+7):(y_min+height), locs_x{i_img}(i)-10:locs_x{i_img}(i)+10); 
+            tempimg = subimg_clean{i_img}((round(locs_y{i_img}(i))+7):(y_min+height), round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+            flag_size = mean(tempimg(:,end-6));
+
         end
         
-        if (locs_group_size{i_img}(i) > 2)
-            beam_size = max(sum(tempimg(:,1)), sum(tempimg(:,end)))/length(tempimg(:,1));
-            
-            if beam_size > 0.32
-                locs_eighth_note{i_img}(i) = false;
-                locs_fourth_note{i_img}(i) = false;
-            else
-                locs_eighth_note{i_img}(i) = true;
-            end
-        
-        else
-            i
-            flag_size = max(sum(tempimg(:,1)), sum(tempimg(:,end-6)))/length(tempimg(:,1))
-            %figure
-            %imshow(tempimg(:,:))
+        % Single notes
+        if locs_group_size{i_img}(i) == 1
             
             if flag_size < 0.01
                 locs_fourth_note{i_img}(i) = true;
-            elseif flag_size < 0.7
+            elseif flag_size < 0.95
                 locs_eighth_note{i_img}(i) = true;
             else
                 locs_fourth_note{i_img}(i) = false;
                 locs_eighth_note{i_img}(i) = false;
             end
+            
+        % Group notes
+        elseif locs_group_size{i_img}(i) < 4
+            i
+            beam_size = max(sum(tempimg(:,1)), sum(tempimg(:,end)))/length(tempimg(:,1));
+            figure
+            imshow(tempimg(:,:))
+            if beam_size < 0.4
+                locs_eighth_note{i_img}(i) = true;
+            else
+                locs_eighth_note{i_img}(i) = false;
+                locs_fourth_note{i_img}(i) = false;        
+            end
+        else
+            locs_eighth_note{i_img}(i) = false;
+            locs_fourth_note{i_img}(i) = false;           
         end
+        
+
     end
 end
 
@@ -259,7 +269,9 @@ for i_img=1:length(split_pos)-1
 
     end
     
-    result = strcat(result, 'n');
+    if i_img ~= length(split_pos)-1
+        result = strcat(result, 'n');
+    end
 end
 
 result
