@@ -26,7 +26,12 @@ bw_original = 1-imbinarize(image(:,:,3),'adaptive','ForegroundPolarity','dark','
 [H, theta, rho] = hough(bw_original, 'theta', -89.9:0.1:89.9);
 peak = houghpeaks(H);
 barAngle = theta(peak(2));
-rotationAngle = 90 + barAngle;
+
+if barAngle > 0
+    rotationAngle = 270 + barAngle;
+else
+    rotationAngle = 90 + barAngle;
+end
 
 B = imrotate(image, rotationAngle, 'loose');
 bw_original = 1-im2bw(B, 0.8);
@@ -37,6 +42,7 @@ crop = abs(round(tand(rotationAngle) * length(bw_original(1,:))));
 bw_original = bw_original(crop:end-crop,crop:end-crop);
 
 bw = bw_original;
+
 
 % STAFF LINE IDENTIFICATION 
 staff_lines = staff_line_identification(bw);
@@ -50,8 +56,9 @@ for i=1:length(staff_lines(:))
     bw_no_sl(staff_lines(i)+1, :) = 0;
 end
 
+
 % Identify positions to split into subimages for each row block
-split_pos(1) = 1;
+split_pos(1) = max(staff_lines(1)-75, 1);
 for i=5:5:length(staff_lines(:))-1
     split_pos(end+1) = ceil(staff_lines(i) + ((staff_lines(i+1) - staff_lines(i)) / 2));
 end
@@ -67,37 +74,38 @@ end
 
 
 % Detect note heads
+se_disk_small = strel('disk', 3);
 se_disk = strel('disk', 4);
 se_disk_large = strel('disk', 5);
 
 subimg_temp = [];
 
 for i_img=1:length(split_pos)-1
+        
     % Filter out round objects i.e. note heads
     subimg_temp{i_img} = imerode(subimg{i_img},se_disk);
+    
+    
+    L = bwlabel(subimg_temp{i_img});
+    note_heads = regionprops(L, 'Area');
+    max_area = max([note_heads.Area]);
+    
+   
     % Remove noise
-    subimg_temp{i_img} = bwareaopen(subimg_temp{i_img}, 8);
+    subimg_temp{i_img} = bwareaopen(subimg_temp{i_img}, round(max_area*0.4));
     % Merge close objects
     subimg_temp{i_img} = imdilate(subimg_temp{i_img},se_disk_large);
     
-    %overlay = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
-    %figure;
-    %imshow(overlay);
+    
+    overlay = imoverlay(subimg{i_img}, subimg_temp{i_img}, [.3 1 .3]);
+    figure;
+    imshow(overlay);
     note_heads = regionprops(subimg_temp{i_img}, 'Centroid');
     centroids = cat(1, note_heads.Centroid);
     locs_x{i_img} = centroids(:,1);
     locs_y{i_img} = centroids(:,2);
 end 
 
-
-
-imshow(subimg{2})
-hold on
-for i= 1:length(locs_y{2})
-    p1 = [locs_x{2}(i), locs_y{2}(i)];
-    plot(p1(1), p1(2), '*')
-    hold on
-end
 
 
 %
@@ -119,8 +127,8 @@ subimg_clean = [];
 for i_img=1:length(split_pos)-1
     subimg_clean{i_img} = imdilate(subimg_no_sl{i_img},se_line);
     
-    figure
-    imshow(subimg_no_sl{i_img})
+    %figure
+    %imshow(subimg_clean{i_img})
 
 end
 
@@ -180,13 +188,13 @@ end
 locs_eighth_note = [];
 locs_fourth_note = [];
 pks_temp = [];
-for i_img=2%1:length(split_pos)-1
+for i_img=1:length(split_pos)-1
     locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
     locs_fourth_note{i_img} = zeros(1,length(locs_x{i_img}));
     
     bb_mat = cell2mat(locs_bb{i_img});
 
-    for i = [10, 11,12]%1:length(locs_x{i_img})
+    for i = 1:length(locs_x{i_img})
         % Horizontal projection to classify note type
         x_min = floor(locs_bb{i_img}{i}(1));
         y_min = floor(locs_bb{i_img}{i}(2));
@@ -209,7 +217,7 @@ for i_img=2%1:length(split_pos)-1
         % Single notes
         if locs_group_size{i_img}(i) == 1
             
-            if flag_size < 0.01
+            if flag_size < 0.2
                 locs_fourth_note{i_img}(i) = true;
             elseif flag_size < 0.95
                 locs_eighth_note{i_img}(i) = true;
@@ -219,23 +227,18 @@ for i_img=2%1:length(split_pos)-1
             end
             
         % Group notes
-        elseif locs_group_size{i_img}(i) < 4
-            i
+        else 
+            %i
             beam_size = max(sum(tempimg(:,1)), sum(tempimg(:,end)))/length(tempimg(:,1));
-            figure
-            imshow(tempimg(:,:))
+            %figure
+            %imshow(tempimg(:,:))
             if beam_size < 0.4
                 locs_eighth_note{i_img}(i) = true;
             else
                 locs_eighth_note{i_img}(i) = false;
                 locs_fourth_note{i_img}(i) = false;        
             end
-        else
-            locs_eighth_note{i_img}(i) = false;
-            locs_fourth_note{i_img}(i) = false;           
         end
-        
-
     end
 end
 
@@ -256,7 +259,13 @@ for i_img=1:length(split_pos)-1
         
         ref_note = 15;
         tone_distance = distance/diff;
-        tone = notes{round(ref_note-tone_distance)};
+        
+        if tone_distance < ref_note && tone_distance > -5
+            tone = notes{round(ref_note-tone_distance)}
+        else
+            locs_eighth_note{i_img}(i) = false;
+            locs_fourth_note{i_img}(i) = false; 
+        end
         
         
         if locs_eighth_note{i_img}(i)
