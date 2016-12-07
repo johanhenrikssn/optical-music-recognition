@@ -123,8 +123,8 @@ subimg_clean = [];
 for i_img=1:length(split_pos)-1
     subimg_clean{i_img} = imdilate(subimg_no_sl{i_img},se_line);
     
-    figure
-    imshow(subimg_clean{i_img})
+    %figure
+    %imshow(subimg_clean{i_img})
 
 end
 
@@ -132,18 +132,18 @@ end
 %imshow(subimg_clean{1})
 
 % Draw bounding boxes around note heads
-
+%objects = [];
 for i_img=1:length(split_pos)-1
     % Get all coherent regions
     L = bwlabel(subimg_clean{i_img});
-    objects = regionprops(L, 'BoundingBox');
+    objects{i_img} = regionprops(L, 'BoundingBox');
     
     %figure
     %imshow(subimg_clean{i_img})
 
     for i = 1:length(locs_x{i_img})
-        for k = 1:length(objects)
-            bb = objects(k).BoundingBox;
+        for k = 1:length(objects{i_img})
+            bb = objects{i_img}(k).BoundingBox;
             % Find right bounding box for each note head
             if locs_x{i_img}(i) > bb(1) && locs_x{i_img}(i) < bb(1)+bb(3) && locs_y{i_img}(i) > bb(2) && locs_y{i_img}(i) < bb(2)+bb(4)
                 % Draw and store bounding box
@@ -153,6 +153,22 @@ for i_img=1:length(split_pos)-1
         end
     end
 end
+
+for i_img=1:length(split_pos)-1
+
+   for k = 1:length(objects{i_img})
+       bb_mat = cell2mat(locs_bb{i_img});
+       bb = objects{i_img}(k).BoundingBox;
+       if ~ (ismember(bb(2), bb_mat(2:4:end)) && ismember(bb(1), bb_mat(1:4:end)))
+            subimg_clean{i_img}(round(bb(2)):round(bb(2)+bb(4)),round(bb(1)):round(bb(1)+bb(3))) = 0;
+       end
+   end
+
+   %figure
+   %imshow(subimg_clean{i_img})
+end
+
+
 %
 % Check if multiple noteheads share bounding box and classify as eighth notes
 locs_group_size = [];
@@ -166,7 +182,7 @@ end
 locs_eighth_note = [];
 locs_fourth_note = [];
 pks_temp = [];
-for i_img=1%:length(split_pos)-1
+for i_img=1:length(split_pos)-1
     locs_eighth_note{i_img} = zeros(1,length(locs_x{i_img}));
     locs_fourth_note{i_img} = zeros(1,length(locs_x{i_img}));
 
@@ -182,8 +198,8 @@ for i_img=1%:length(split_pos)-1
         else
             tempimg = subimg_clean{i_img}((locs_y{i_img}(i)+7):(y_min+height), locs_x{i_img}(i)-7:locs_x{i_img}(i)+7); 
         end
-        figure
-        imshow(tempimg)
+        %figure
+        %imshow(tempimg)
 
         [pks, locs] = findpeaks(sum(tempimg, 2));
         pks_temp{i_img}{i} = pks;
@@ -198,7 +214,7 @@ for i_img=1%:length(split_pos)-1
     end
 end
 
-%%
+
 % Determine tones
 
 notes = {'E4','D4','C4','B3','A3','G3','F3','E3','D3','C3','B2','A2','G2','F2','E2','D2','C2','B1','A1','G1'};
