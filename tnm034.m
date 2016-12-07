@@ -68,43 +68,39 @@ end
 
 % Detect note heads
 se_disk = strel('disk', 4);
+se_disk_large = strel('disk', 5);
 
 subimg_temp = [];
-locs_x = [];
-locs_y = [];
-for i=1:length(split_pos)-1
+
+for i_img=1:length(split_pos)-1
     % Filter out round objects i.e. note heads
-    subimg_temp{i} = imerode(subimg{i},se_disk);
+    subimg_temp{i_img} = imerode(subimg{i_img},se_disk);
     % Remove noise
-    subimg_temp{i} = bwareaopen(subimg_temp{i}, 8);
+    subimg_temp{i_img} = bwareaopen(subimg_temp{i_img}, 8);
     % Merge close objects
-    subimg_temp{i} = imdilate(subimg_temp{i},se_disk);
+    subimg_temp{i_img} = imdilate(subimg_temp{i_img},se_disk_large);
     
     %overlay = imoverlay(subimg{i}, subimg_temp{i}, [.3 1 .3]);
     %figure;
     %imshow(overlay);
-    
-
-    [pks, locs_x{i}] = findpeaks(sum(subimg_temp{i},1));
-    
-    locs_y{i} = [];
-    for j = 1:length(locs_x{i})
-        temp = subimg_temp{i}(:, locs_x{i}(j)-2:locs_x{i}(j)+2);
-        [pks, lo] = findpeaks(sum(temp,2));
-        indexOfMaxValue = find(pks == max(pks));
-        locs_y{i}(j) = lo(indexOfMaxValue(1))+3;
-    end
+    note_heads = regionprops(subimg_temp{i_img}, 'Centroid');
+    centroids = cat(1, note_heads.Centroid);
+    locs_x{i_img} = centroids(:,1);
+    locs_y{i_img} = centroids(:,2);
 end 
+
 
 
 imshow(subimg{1})
 hold on
 for i= 1:length(locs_y{1})
-    p1 = [locs_x{1}(i)+2, locs_y{1}(i)];
+    p1 = [locs_x{1}(i), locs_y{1}(i)];
     plot(p1(1), p1(2), '*')
     hold on
 end
 
+
+%
 % Map staff lines to block rows
 subimg_staff_lines = [];
 for i=1:length(split_pos)-1
