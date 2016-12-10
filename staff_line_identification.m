@@ -3,11 +3,10 @@ function [ staff_lines ] = staff_line_identification( bw_image )
 %   Inputs, binary image
 %   Outputs, positions and cluster of the staff lines
     
-
-    
     % Erosion of horizontal lines 
     se_line = strel('line', length(bw_image)*0.005, 0);
     bw_image = imerode(bw_image, se_line);
+
     %figure
     %imshow(bw_image)
     % Plot the horizontal projection
@@ -20,7 +19,7 @@ function [ staff_lines ] = staff_line_identification( bw_image )
     % Remove all unrelevant peaks based on threshold
     % Can be improved by using cluster classification
     % median(diff())
-    tresh = pks > max(pks)/3;
+    tresh = pks > max(pks)/5;
     locs = locs .* tresh;
     pks = pks .* tresh;
 
@@ -30,9 +29,7 @@ function [ staff_lines ] = staff_line_identification( bw_image )
     
     % Classification of stafflines clusters
     if mod(length(locs_tresh), 5) == 0
-        for i = 1:length(locs_tresh)
-            staff_lines(i) = locs_tresh(i);
-        end
+        staff_lines = locs_tresh;
     end
 
 end

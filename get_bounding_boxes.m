@@ -32,8 +32,7 @@ function [ locs_bb, out_subimg_clean ] = get_bounding_boxes( locs_x, locs_y, sub
            if ~ (ismember(bb(2), bb_mat(2:4:end)) && ismember(bb(1), bb_mat(1:4:end)))
                 out_subimg_clean{i_img}(round(bb(2)):round(bb(2)+bb(4)),round(bb(1)):round(bb(1)+bb(3))) = 0;
            end
-       end 
+        end 
     end
-
 end
 
