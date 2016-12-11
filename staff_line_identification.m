@@ -10,8 +10,8 @@ function [ staff_lines ] = staff_line_identification( bw_image )
     %figure
     %imshow(bw_image)
     % Plot the horizontal projection
-    %figure
-    %plot(sum(bw_image,2), fliplr(1:size(bw_image,1)));
+    figure
+    plot(sum(bw_image,2), fliplr(1:size(bw_image,1)));
     
     % Find locations using Horizontal projection
     [pks, locs] = findpeaks(sum(bw_image,2));
@@ -30,6 +30,20 @@ function [ staff_lines ] = staff_line_identification( bw_image )
     % Classification of stafflines clusters
     if mod(length(locs_tresh), 5) == 0
         staff_lines = locs_tresh;
+    else
+        staff_lines = locs_tresh;
+        
+        % Remove shortest line until the systems consist of 5 lines
+        while ~ mod(length(staff_lines), 5) == 0
+            index = find(pks_tresh == min(pks_tresh));
+            pks_tresh(index) = [];
+            staff_lines(index) = [];
+            
+            pks_tresh = pks_tresh(pks_tresh~=0);
+            staff_lines = staff_lines(staff_lines~=0);
+        end
+        
+        length(staff_lines)
     end
 
 end
