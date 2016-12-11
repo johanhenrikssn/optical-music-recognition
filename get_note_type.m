@@ -23,11 +23,13 @@ function [ locs_fourth_note, locs_eighth_note ] = get_note_type( locs_x, locs_y,
             mean_y = mean(locs_y{i_img}(i_group));
 
             if mean_y > y_min+height/2
-                tempimg = subimg_clean{i_img}(y_min:(round(locs_y{i_img}(i))-7), round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+                tempimg = subimg_clean{i_img}(y_min:(round(locs_y{i_img}(i))-7),...
+                    round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
                 flag_size = mean(tempimg(:,end));
 
             else
-                tempimg = subimg_clean{i_img}((round(locs_y{i_img}(i))+7):(y_min+height), round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+                tempimg = subimg_clean{i_img}((round(locs_y{i_img}(i))+7):(y_min+height),...
+                    round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
                 flag_size = mean(tempimg(:,end-6));
 
             end

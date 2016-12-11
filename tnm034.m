@@ -9,7 +9,7 @@ function strout = tnm034( image )
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%
     strout = '';
-
+    
     % ------ PREPROCESSING   
     
     % Crop image
