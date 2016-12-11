@@ -23,15 +23,42 @@ function [ locs_fourth_note, locs_eighth_note ] = get_note_type( locs_x, locs_y,
             mean_y = mean(locs_y{i_img}(i_group));
 
             if mean_y > y_min+height/2
-                tempimg = subimg_clean{i_img}(y_min:(round(locs_y{i_img}(i))-7),...
-                    round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+                if ~(round(locs_y{i_img}(i))-7 > size(subimg_clean{i_img}(:,1)))
+                    y_max = round(locs_y{i_img}(i))-7;
+                else
+                    y_max = round(locs_y{i_img}(i));
+                end
+                if ~(round(locs_x{i_img}(i))-10 < 0)
+                    x_min_pos = round(locs_x{i_img}(i))-10;
+                else
+                    x_min_pos = round(locs_x{i_img}(i));
+                end
+                if ~(round(locs_x{i_img}(i))+10 > size(subimg_clean{i_img}(1,:)))
+                    x_max = round(locs_x{i_img}(i))+10;
+                else
+                    x_max = round(locs_x{i_img}(i));
+                end
+                    tempimg = subimg_clean{i_img}(y_min:y_max, x_min_pos:x_max);
                 flag_size = mean(tempimg(:,end));
-
             else
-                tempimg = subimg_clean{i_img}((round(locs_y{i_img}(i))+7):(y_min+height),...
-                    round(locs_x{i_img}(i))-10:round(locs_x{i_img}(i))+10);
+                if ~((round(locs_y{i_img}(i))+7) > size(subimg_clean{i_img}(:,1)))
+                    y_min_pos = round(locs_y{i_img}(i))+7;
+                else
+                    y_min_pos = round(locs_y{i_img}(i));
+                end
+                if ~((round(locs_x{i_img}(i))-10) < 0)
+                    x_min_pos = round(locs_x{i_img}(i))-10;
+                else
+                    x_min_pos = round(locs_x{i_img}(i));
+                end
+                if ~((round(locs_x{i_img}(i))+10) > size(subimg_clean{i_img}(1,:)))
+                    x_max = round(locs_x{i_img}(i))+10;
+                else
+                    x_max = round(locs_x{i_img}(i));
+                end
+                
+                tempimg = subimg_clean{i_img}(y_min_pos:(y_min+height), x_min_pos:x_max);
                 flag_size = mean(tempimg(:,end-6));
-
             end
 
             % Single notes
