@@ -23,6 +23,7 @@ function [ locs_fourth_note, locs_eighth_note ] = get_note_type( locs_x, locs_y,
             mean_y = mean(locs_y{i_img}(i_group));
 
             if mean_y > y_min+height/2
+                %Out of bounds control
                 if ~(round(locs_y{i_img}(i))-7 > size(subimg_clean{i_img}(:,1), 1))
                     y_max = round(locs_y{i_img}(i))-7;
                 else
@@ -41,6 +42,7 @@ function [ locs_fourth_note, locs_eighth_note ] = get_note_type( locs_x, locs_y,
                     tempimg = subimg_clean{i_img}(y_min:y_max, x_min_pos:x_max);
                 flag_size = mean(tempimg(:,end));
             else
+                %Out of bounds control
                 if ~((round(locs_y{i_img}(i))+7) > size(subimg_clean{i_img}(:,1), 1))
                     y_min_pos = round(locs_y{i_img}(i))+7;
                 else
