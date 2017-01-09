@@ -33,9 +33,9 @@ function [ locs_x, locs_y ] = find_note_locations( subimg, n )
         subimg_temp{i_img} = subimg_temp{i_img} > 0.01;
         
         % Print detected notes as an overlay on the image
-        overlay = imoverlay(subimg{i_img}, subimg_temp{i_img}, [.3 1 .3]);
-        figure;
-        imshow(overlay);
+        %overlay = imoverlay(subimg{i_img}, subimg_temp{i_img}, [.3 1 .3]);
+        %figure;
+        %imshow(overlay);
         
         % Find locations of the note head based on their centroids
         note_heads = regionprops(subimg_temp{i_img}, 'Centroid');
